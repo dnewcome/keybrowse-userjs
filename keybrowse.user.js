@@ -19,9 +19,12 @@
  * TODO: try to disable for hidden iframes
  * TODO: develop some heuristic so we don't get lost amonst hidden or 
  * 	irrelevant links.
+ * TODO: handle running off the page, beyond last or first link
  */
 
-var urls = [];
+var urls = [],
+	currentlink = 0;
+
 console.log( 'loading user script for browser nav' );
 console.log('found ' + document.links.length + ' links on the page');
 for(var i=0; i<document.links.length; i++) {
@@ -29,36 +32,14 @@ for(var i=0; i<document.links.length; i++) {
 	urls.push({top: top, dom: document.links[i]});
 }
 
-/** 
- * the row that is in focus for operations
- * global. bad.
- */
-var currentrow;
-
-/**
- * Only activate script for /, newest, news, and x. Pagination
- * uses the /x path with a timestamp id.
- */
 console.log('window.location:');
 console.log(window.location.href);
-__main();
 
-/*
- * Main function is prefixed here. It's bad form to have all
- * of these functions out in the main namespace, but for some
- * reason opera loads user scripts for local files and I get 
- * conflicts sometimes.
- */
-function __main() {
-	document.addEventListener( 'keypress', onKeydown, false ); 
-
-	currentrow = 0;
-	highlight(urls[currentrow].dom);
-}
+document.addEventListener( 'keypress', onKeydown, false ); 
+highlight(urls[currentlink].dom);
 
 /**
- * Abstract the act of highlighting and unhighlighting
- * a DOM element somewhat
+ * highlighting and unhighlighting a DOM element 
  */
 function highlight( el ) {
 	el.style.backgroundColor = "rgba(255,102,0,0.3)"
@@ -67,19 +48,22 @@ function unhighlight( el ) {
 	el.style.backgroundColor = null;
 }
 
+/**
+ * move highlighting between links 
+ */
 function moveDown() {
-	unhighlight(urls[currentrow].dom);
-	currentrow += 1;
-	highlight(urls[currentrow].dom);
+	unhighlight(urls[currentlink].dom);
+	currentlink += 1;
+	highlight(urls[currentlink].dom);
 }
 function moveUp() {
-	unhighlight(urls[currentrow].dom);
-	currentrow -= 1;
-	highlight(urls[currentrow].dom);
+	unhighlight(urls[currentlink].dom);
+	currentlink -= 1;
+	highlight(urls[currentlink].dom);
 }
 
 /**
- * Handler for key commands, currently j,k,x
+ * Handler for key commands, currently j,k,enter
  */
 function onKeydown( evt ) {
 	console.log( evt.keyCode + ' ' + evt.charCode );
@@ -107,7 +91,7 @@ function onKeydown( evt ) {
  * Used by 'enter' command to browse to a story 
  */
 function browse() {
-	var link = urls[currentrow].dom.href;
+	var link = urls[currentlink].dom.href;
 	window.location = link;
 }
 
